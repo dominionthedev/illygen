@@ -89,7 +89,7 @@ func main() {
 
 If you have ideas, suggestions, or want to contribute code, please feel free to:
 
-- Join the discussion in the [Leraniode Discussions](github.com/leraniode/illygen/discussions)
+- Join the discussion in the [Leraniode Discussions](https://github.com/leraniode/illygen/discussions)
 - Open an issue for bugs or feature requests
 - Submit a pull request with your changes
 
