@@ -1,5 +1,5 @@
-// Package graph provides raw graph primitives for flow management.
-// This is an internal package — use the core/flow API instead.
+// Package graph provides the internal weighted graph that powers Illygen flows.
+// This package is private — users interact with Flow, not Graph directly.
 package graph
 
 import (
@@ -7,99 +7,62 @@ import (
 	"sync"
 )
 
-// Connection represents a directed weighted edge between two nodes.
-type Connection struct {
+// Edge is a directed weighted connection between two nodes.
+type Edge struct {
 	From   string
 	To     string
-	Weight float64 // 0.0 to 1.0
+	Weight float64
 }
 
 // Graph is a directed weighted graph of node connections.
-// It is the underlying structure of a Flow.
 type Graph struct {
-	mu          sync.RWMutex
-	connections map[string][]*Connection // keyed by From node ID
+	mu    sync.RWMutex
+	edges map[string][]*Edge // keyed by From node ID
 }
 
 // New creates an empty Graph.
 func New() *Graph {
-	return &Graph{
-		connections: make(map[string][]*Connection),
-	}
+	return &Graph{edges: make(map[string][]*Edge)}
 }
 
-// Connect adds a directed connection from → to with the given weight.
-func (g *Graph) Connect(from, to string, weight float64) error {
+// Add creates a directed edge from → to with the given weight.
+// Returns an error if the edge already exists.
+func (g *Graph) Add(from, to string, weight float64) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	for _, c := range g.connections[from] {
-		if c.To == to {
-			return fmt.Errorf("illygen/graph: connection %q → %q already exists", from, to)
+	for _, e := range g.edges[from] {
+		if e.To == to {
+			return fmt.Errorf("graph: edge %q → %q already exists", from, to)
 		}
 	}
-	g.connections[from] = append(g.connections[from], &Connection{
-		From:   from,
-		To:     to,
-		Weight: weight,
-	})
+	g.edges[from] = append(g.edges[from], &Edge{From: from, To: to, Weight: weight})
 	return nil
 }
 
-// Outgoing returns all connections from a given node, sorted by weight descending.
-func (g *Graph) Outgoing(from string) []*Connection {
+// From returns all edges outgoing from a node, sorted by weight descending.
+func (g *Graph) From(id string) []*Edge {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
-	conns := make([]*Connection, len(g.connections[from]))
-	copy(conns, g.connections[from])
-	sortConnections(conns)
-	return conns
+	edges := make([]*Edge, len(g.edges[id]))
+	copy(edges, g.edges[id])
+	sortEdges(edges)
+	return edges
 }
 
-// AdjustWeight modifies the weight of a specific connection.
-// delta is added to the current weight and the result is clamped to [0.0, 1.0].
-func (g *Graph) AdjustWeight(from, to string, delta float64) error {
-	g.mu.Lock()
-	defer g.mu.Unlock()
+// Has reports whether a node ID has any outgoing edges.
+func (g *Graph) Has(id string) bool {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	_, ok := g.edges[id]
+	return ok
+}
 
-	for _, c := range g.connections[from] {
-		if c.To == to {
-			c.Weight = clamp(c.Weight+delta, 0.0, 1.0)
-			return nil
+func sortEdges(edges []*Edge) {
+	for i := 1; i < len(edges); i++ {
+		for j := i; j > 0 && edges[j].Weight > edges[j-1].Weight; j-- {
+			edges[j], edges[j-1] = edges[j-1], edges[j]
 		}
 	}
-	return fmt.Errorf("illygen/graph: connection %q → %q not found", from, to)
-}
-
-// Disconnect removes a connection from → to.
-func (g *Graph) Disconnect(from, to string) {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-
-	conns := g.connections[from]
-	for i, c := range conns {
-		if c.To == to {
-			g.connections[from] = append(conns[:i], conns[i+1:]...)
-			return
-		}
-	}
-}
-
-func sortConnections(conns []*Connection) {
-	for i := 1; i < len(conns); i++ {
-		for j := i; j > 0 && conns[j].Weight > conns[j-1].Weight; j-- {
-			conns[j], conns[j-1] = conns[j-1], conns[j]
-		}
-	}
-}
-
-func clamp(v, min, max float64) float64 {
-	if v < min {
-		return min
-	}
-	if v > max {
-		return max
-	}
-	return v
 }
