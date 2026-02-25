@@ -25,72 +25,55 @@ Illygen enables developers to build AI-like systems that can **reason, make deci
 package main
 
 import (
-    "context"
     "fmt"
 
-    "github.com/leraniode/illygen/core"
-    "github.com/leraniode/illygen/runtime"
+    illygen "github.com/leraniode/illygen"
 )
 
-// Define a node
-type UserProfilerNode struct{ core.BaseNode }
-
-func (n *UserProfilerNode) Consult(ctx *core.Context) (core.Verdict, error) {
-    if ctx.Get("is_programmer") == true {
-        return core.Verdict{Route: "go_intro", Output: "programmer detected", Weight: 0.9}, nil
-    }
-    return core.Verdict{Route: "prog_intro", Output: "new to programming", Weight: 0.7}, nil
-}
-
-type GoIntroNode struct{ core.BaseNode }
-
-func (n *GoIntroNode) Consult(ctx *core.Context) (core.Verdict, error) {
-    return core.Verdict{Output: "Welcome, here's Go: https://go.dev"}, nil
-}
-
-type ProgrammingIntroNode struct{ core.BaseNode }
-
-func (n *ProgrammingIntroNode) Consult(ctx *core.Context) (core.Verdict, error) {
-    return core.Verdict{Output: "Welcome! Programming is the art of telling computers what to do."}, nil
-}
-
 func main() {
-    // Wire the flow
-    flow := core.NewFlow("onboarding").
-        Add(&UserProfilerNode{core.NewBaseNode("profiler")}).
-        Add(&GoIntroNode{core.NewBaseNode("go_intro")}).
-        Add(&ProgrammingIntroNode{core.NewBaseNode("prog_intro")}).
-        Connect("profiler", "go_intro").
-        Connect("profiler", "prog_intro")
+    // Define nodes as plain Go functions
+    profiler := illygen.NewNode("profiler", func(ctx illygen.Context) illygen.Result {
+        if ctx.Get("is_programmer") == true {
+            return illygen.Result{Next: "go_intro", Confidence: 0.9}
+        }
+        return illygen.Result{Next: "prog_intro", Confidence: 0.7}
+    })
 
-    // Boot the runtime
-    rt := runtime.New()
-    rt.Register(flow)
+    goIntro := illygen.NewNode("go_intro", func(ctx illygen.Context) illygen.Result {
+        return illygen.Result{
+            Value:      "Welcome! Here's Go: https://go.dev",
+            Confidence: 1.0,
+        }
+    })
+
+    progIntro := illygen.NewNode("prog_intro", func(ctx illygen.Context) illygen.Result {
+        return illygen.Result{
+            Value:      "Welcome! Programming is the art of telling computers what to do.",
+            Confidence: 1.0,
+        }
+    })
+
+    // Wire the flow
+    flow := illygen.NewFlow().
+        Add(profiler).
+        Add(goIntro).
+        Add(progIntro).
+        Link("profiler", "go_intro", 1.0).
+        Link("profiler", "prog_intro", 1.0)
 
     // Run it
-    ctx := core.NewContext("onboarding", "run-001")
-    ctx.Set("is_programmer", true)
+    engine := illygen.NewEngine()
 
-    out, err := rt.Run(context.Background(), "onboarding", ctx)
+    result, err := engine.Run(flow, illygen.Context{
+        "is_programmer": true,
+    })
     if err != nil {
         panic(err)
     }
 
-    fmt.Println(out.LastOutput())
-    // Output: Welcome, here's Go: https://go.dev
+    fmt.Println(result.Value)
+    // Output: Welcome! Here's Go: https://go.dev
 }
-```
-
----
-
-## Packages
-
-```
-illygen/
-├── core/        Node, Flow, Context, Verdict — the building blocks
-├── knowledge/   KnowledgeUnit, KnowledgeStore — the intelligence feed
-├── runtime/     The execution engine
-└── internal/    Graph primitives (not for direct use)
 ```
 
 ---
