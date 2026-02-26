@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/leraniode/.github/main/assets/images/illygenbrandingimage.svg" width="600" height="300" alt="Illygen"/>
+  <img src="https://raw.githubusercontent.com/leraniode/.github/main/assets/images/illygenbrandingimage.svg" width="1024" height="300" alt="Illygen"/>
 </p>
 
 # Illygen
