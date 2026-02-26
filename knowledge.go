@@ -10,13 +10,27 @@ import (
 // It is lightweight — similar in concept to a tensor in AI, but built around
 // structured facts rather than numerical matrices.
 //
+// Units are created via KnowledgeStore.Add.
 // Training produces units with high initial Weight.
-// Exploring refines them over time.
+// Exploring (v0.3+) will refine weights over time.
 type KnowledgeUnit struct {
-	ID      string
-	Domain  string
-	Facts   map[string]any
-	Weight  float64
+	// ID uniquely identifies this unit within the store.
+	ID string
+
+	// Domain scopes this unit to a reasoning area (e.g. "greetings", "math").
+	// Nodes query the store by domain — they only see units relevant to them.
+	Domain string
+
+	// Facts holds the structured knowledge for this unit.
+	// Keys and value types are defined by the developer.
+	Facts map[string]any
+
+	// Weight represents how trusted or relevant this unit is (0.0 to 1.0).
+	// Higher weight units appear first in Domain query results.
+	// Defaults to 1.0 on creation.
+	Weight float64
+
+	// Updated records the last time this unit was modified.
 	Updated time.Time
 }
 
@@ -45,8 +59,16 @@ func NewKnowledgeStore() *KnowledgeStore {
 }
 
 // Add inserts a new KnowledgeUnit into the store.
+// Both id and domain must be non-empty strings.
 // Returns an error if a unit with the same ID already exists.
 func (s *KnowledgeStore) Add(id, domain string, facts map[string]any) error {
+	if id == "" {
+		return fmt.Errorf("illygen: KnowledgeStore.Add called with empty id")
+	}
+	if domain == "" {
+		return fmt.Errorf("illygen: KnowledgeStore.Add %q called with empty domain", id)
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

@@ -34,6 +34,9 @@ func NewFlow() *Flow {
 // The first node added becomes the entry point automatically.
 // Returns the Flow for chaining.
 func (f *Flow) Add(node *Node) *Flow {
+	if node == nil {
+		panic("illygen: Flow.Add called with nil node")
+	}
 	f.nodes[node.ID()] = node
 	if f.entry == "" {
 		f.entry = node.ID()

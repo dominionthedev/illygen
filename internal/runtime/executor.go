@@ -6,6 +6,11 @@ import (
 	"fmt"
 )
 
+// maxVisits is the maximum number of times a single node can be visited
+// in one flow execution before the engine declares a cycle and returns an error.
+// This guards against infinite loops caused by circular Next routing.
+const maxVisits = 50
+
 // Step records what happened at a single node during execution.
 type Step struct {
 	NodeID     string
@@ -17,10 +22,14 @@ type Step struct {
 // ExecutionTrace is the complete record of a flow execution.
 // It is used by the engine to return results and, in future versions,
 // by the learning logic to adjust weights.
+// ExecutionTrace is the complete record of a flow execution.
+// Steps holds every node visited in order.
+// Final holds the last step — its Value and Confidence are returned to the caller.
+// In future versions, the learning logic will read the trace to adjust weights.
 type ExecutionTrace struct {
-	Steps  []Step
-	Final  Step
-	Done   bool
+	Steps []Step
+	Final Step
+	Done  bool
 }
 
 // NodeExecutor is a function that runs a node — the engine calls this
@@ -31,12 +40,13 @@ type NodeExecutor func(nodeID string) (value any, confidence float64, next strin
 // until a node returns an empty Next or no outgoing edges exist.
 //
 // This is the core algorithm:
-//   Start at entry node
-//   Loop:
-//     execute node → get result
-//     choose next node (from result.Next or highest-weight edge)
-//     move to next node
-//   Stop when no next node
+//
+//	Start at entry node
+//	Loop:
+//	  execute node → get result
+//	  choose next node (from result.Next or highest-weight edge)
+//	  move to next node
+//	Stop when no next node
 func Execute(entry string, executor NodeExecutor) (*ExecutionTrace, error) {
 	trace := &ExecutionTrace{}
 	current := entry
@@ -44,10 +54,12 @@ func Execute(entry string, executor NodeExecutor) (*ExecutionTrace, error) {
 	visited := make(map[string]int)
 
 	for current != "" {
-		// Guard against infinite loops
 		visited[current]++
-		if visited[current] > 100 {
-			return nil, fmt.Errorf("illygen/runtime: cycle detected at node %q", current)
+		if visited[current] > maxVisits {
+			return nil, fmt.Errorf(
+				"illygen/runtime: node %q visited %d times — possible cycle detected",
+				current, visited[current],
+			)
 		}
 
 		value, confidence, next, err := executor(current)

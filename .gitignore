@@ -28,3 +28,11 @@
 .vscode/
 .idea/
 
+# updating
+illygen-*/
+illygen-*.zip
+illygen-*.tar.gz
+illygen.zip
+illygen.tar.gz
+
+
