@@ -4,6 +4,15 @@
 
 # Illygen
 
+
+[![CI](https://github.com/leraniode/illygen/actions/workflows/ci.yml/badge.svg)](https://github.com/leraniode/illygen/actions/workflows/ci.yml)
+[![pkg.go.dev](https://pkg.go.dev/badge/github.com/leraniode/illygen.svg)](https://pkg.go.dev/github.com/leraniode/illygen)
+[![Go Report Card](https://goreportcard.com/badge/github.com/leraniode/illygen)](https://goreportcard.com/report/github.com/leraniode/illygen)
+[![License](https://img.shields.io/github/license/leraniode/illygen.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/tag/leraniode/illygen?label=release)](https://github.com/leraniode/illygen/tags)
+[![Go Version](https://img.shields.io/badge/go-1.22.2-blue.svg)](https://golang.org)
+[![Last Commit](https://img.shields.io/github/last-commit/leraniode/illygen.svg)](https://github.com/leraniode/illygen/commits/main)
+
 > A Go-based library and runtime for building intelligence systems.
 
 Illygen enables developers to build AI-like systems that can **reason, make decisions, and learn** — without being full AI models. It mimics the concepts used in AI using deterministic, inspectable, resource-light Go machinery.
@@ -14,12 +23,11 @@ Illygen enables developers to build AI-like systems that can **reason, make deci
 
 ## Concepts
 
-| Concept | What it is |
-|---|---|
-| **Node** | A single unit of reasoning. You consult it, it returns a verdict. Like a neuron. |
-| **Flow** | A net of connected nodes — the reasoning pipeline. Like a neural network. |
-| **Knowledge** | The feed of intelligence. The more, the smarter the system. |
-| **Learning** | Training (high impact, offline) and Exploring (low impact, online). |
+| Concept       | What it is                                                                       |
+| ------------- | -------------------------------------------------------------------------------- |
+| **Node**      | A single unit of reasoning. You consult it, it returns a verdict. Like a neuron. |
+| **Flow**      | A net of connected nodes — the reasoning pipeline. Like a neural network.        |
+| **Knowledge** | The feed of intelligence. The more, the smarter the system.                      |
 
 ---
 
@@ -102,6 +110,7 @@ MIT
 ---
 
 A [leraniode](https://github.com/leraniode) project.
+
 <p align="left">
    <a href="https://github.com/leraniode">
        <img src="https://raw.githubusercontent.com/leraniode/.github/main/assets/footer/leraniodeproductbrandimage.png" width="400" alt="Leraniode"/>
